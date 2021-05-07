@@ -12,6 +12,15 @@ func TestLoc(t *testing.T) {
 
 }
 
+func TestOffToLoc(t *testing.T) {
+	l := loc{2, 4}
+	off := l.foff()
+	nl := offToLoc(off)
+	if l != nl {
+		t.Fatalf("expected equality got %v and %v", l, nl)
+	}
+}
+
 func TestLabel(t *testing.T) {
 	l := [...]byte{0x03, 0x20, 0x75, 0x30, 0x33, 0x32, 0x30, 0x75}
 	var tg tag

@@ -31,11 +31,17 @@ func main() {
 		err = rdr.DumpSectors()
 	case "files":
 		err = rdr.DumpFiles()
+	case "scan":
+		mp := rdr.Scan()
+		for k, v := range mp {
+			fmt.Printf("%s:\n", k.String())
+			fmt.Printf("List (%d):\n%v\n\nInternal list (%d):\n%v\n\nRaw sectors (%d):\n%v\n\n\n",
+				len(v[0]), v[0], len(v[1]), v[1], len(v[2]), v[2])
+		}
 	default:
 		fmt.Print("Invalid command must be meta or dump\n")
 		os.Exit(1)
 	}
-
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

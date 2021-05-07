@@ -160,13 +160,81 @@ func (r *Reader) DumpFiles() error {
 	return nil
 }
 
+func (r *Reader) Scan() map[tag][3][]int64 {
+	llist := make(map[tag][]int64)
+	for _, d := range r.contents {
+		l := d.l
+		for !l.zero() {
+			llist[d.t] = append(llist[d.t], l.foff())
+			byt, err := r.sector(l)
+			if err != nil {
+				break
+			}
+			copy(l[:], byt)
+		}
+	}
+	llist2 := make(map[tag][]int64)
+	for k, v := range llist {
+		if len(v) < 2 {
+			continue
+		}
+		byt, err := r.sector(offToLoc(v[1]))
+		if err != nil {
+			continue
+		}
+		for i := 8; i < len(byt)-2; i = i + 2 {
+			nl := loc{}
+			copy(nl[:], byt[i:])
+			if !nl.zero() {
+				llist2[k] = append(llist2[k], nl.foff())
+			}
+		}
+	}
+	sectors := make(map[tag][]int64)
+	l := loc{0, 8}
+	for {
+		byt, err := r.sector(l)
+		if err != nil {
+			break
+		}
+		var t tag
+		copy(t[:], byt[4:7])
+		if !t.zero() {
+			sectors[t] = append(sectors[t], l.foff())
+		}
+		l = l.inc()
+	}
+	ret := make(map[tag][3][]int64)
+	for k, v := range llist {
+		ret[k] = [3][]int64{v, llist2[k], sectors[k]}
+	}
+	return ret
+}
+
 type loc [2]byte
+
+func offToLoc(i int64) loc {
+	h := i / 4096
+	m := i % 4096
+	l := m / 256
+	return loc{byte(h), byte(l)}
+}
 
 func (l loc) zero() bool {
 	if l[0] == 0 && l[1] == 0 {
 		return true
 	}
 	return false
+}
+
+func (l loc) inc() loc {
+	if l[1] < 15 {
+		l[1] = l[1] + 1
+	} else {
+		l[1] = 0
+		l[0] = l[0] + 1
+	}
+	return l
 }
 
 func (l loc) chunkoff() int64 {
