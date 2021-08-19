@@ -9,7 +9,7 @@ import (
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Print("Please supply a command (meta or dump) and target\n")
+		fmt.Print("Please supply a command (meta, dump, files or scan) and target\n")
 		os.Exit(1)
 	}
 	f, err := os.Open(os.Args[2])
@@ -39,7 +39,7 @@ func main() {
 				len(v[0]), v[0], len(v[1]), v[1], len(v[2]), v[2])
 		}
 	default:
-		fmt.Print("Invalid command must be meta or dump\n")
+		fmt.Print("Invalid command must be meta, dump, files, or scan\n")
 		os.Exit(1)
 	}
 	if err != nil {
