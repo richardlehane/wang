@@ -1,0 +1,45 @@
+Document ID:   1944L
+Archive ID:    0081
+Document Name: CS Resource Util. 1988
+Author:        VB/HG
+Operator:      Eve Hartl
+Comments:      
+Created:       1989-03-29 11:46:00 +0000 UTC
+Modified:      1989-03-29 16:11:00 +0000 UTC
+
+Document ID:   3838G
+Archive ID:    0081
+Document Name: CMC Reporting - NENS
+Author:        
+Operator:      bm
+Comments:      1989
+Created:       0001-01-01 00:00:00 +0000 UTC
+Modified:      1990-04-22 11:59:00 +0000 UTC
+
+Document ID:   8006L
+Archive ID:    0000
+Document Name: 8006L  R
+Author:        
+Operator:      
+Comments:      
+Created:       0001-01-01 00:00:00 +0000 UTC
+Modified:      1986-06-17 15:13:00 +0000 UTC
+
+Document ID:   8007L
+Archive ID:    0000
+Document Name: 8007L
+Author:        
+Operator:      
+Comments:      
+Created:       0001-01-01 00:00:00 +0000 UTC
+Modified:      1986-06-17 15:13:00 +0000 UTC
+
+Document ID:   9900G
+Archive ID:    0081
+Document Name: Comp Resources 1988
+Author:        vb
+Operator:      vb
+Comments:      
+Created:       0001-01-01 00:00:00 +0000 UTC
+Modified:      1989-03-28 16:36:00 +0000 UTC
+
