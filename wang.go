@@ -49,10 +49,15 @@ func New(ra io.ReaderAt) (*Reader, error) {
 		if err != nil {
 			return nil, err
 		}
-		f, err := file(buf)
+		f, pgl, err := file(buf)
 		if err != nil {
 			return nil, err
 		}
+		buf, err = rdr.sector(pgl)
+		if err != nil {
+			return nil, err
+		}
+		f.pages = pages(buf)
 		rdr.Files[idx] = f
 	}
 	return rdr, nil
@@ -121,20 +126,24 @@ func (r *Reader) DumpSectors() error {
 }
 
 func (r *Reader) DumpFiles() error {
-	for _, d := range r.contents {
-		var jidx int
+	for _, f := range r.Files {
 		var fname string
 		buf := &bytes.Buffer{}
-		l := d.l
-		for !l.zero() {
-			byt, err := r.sector(l)
-			if err != nil {
-				return err
+		for _, l := range f.pages {
+			for {
+				byt, err := r.sector(l)
+				if err != nil {
+					return err
+				}
 			}
+		}
+
+		for !l.zero() {
+
 			copy(l[:], byt)
 			switch jidx {
 			case 0:
-				f, err := file(byt)
+				f, _, err := file(byt)
 				if err != nil {
 					return err
 				}

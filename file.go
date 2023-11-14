@@ -15,6 +15,7 @@ type File struct {
 	Operator  string
 	Created   time.Time
 	Modified  time.Time
+	pages     []loc
 }
 
 func (f *File) String() string {
@@ -30,9 +31,9 @@ func (f *File) String() string {
 		f.DocID.String(), f.ArchiveID, f.Name, f.Author, f.Operator, f.Comment, f.Created, f.Modified)
 }
 
-func file(buf []byte) (*File, error) {
+func file(buf []byte) (*File, loc, error) {
 	if len(buf) < secsz {
-		return nil, fmt.Errorf("sector not big enough for file metadata: %d", len(buf))
+		return nil, loc{}, fmt.Errorf("sector not big enough for file metadata: %d", len(buf))
 	}
 	f := &File{
 		Name:      trim(buf[13:38]),
@@ -44,7 +45,7 @@ func file(buf []byte) (*File, error) {
 		Modified:  date(buf[177:191]),
 	}
 	copy(f.DocID[:], buf[4:7])
-	return f, nil
+	return f, loc{buf[0], buf[1]}, nil
 }
 
 func trim(buf []byte) string {
@@ -61,4 +62,16 @@ func date(buf []byte) time.Time {
 		string(buf[12:14]))
 	t, _ := time.Parse(timefmt, str)
 	return t
+}
+
+func pages(buf []byte) []loc {
+	if len(buf) < 256 {
+		return nil
+	}
+	num := int(buf[2])
+	pgs := make([]loc, num)
+	for i := 0; i < num; i++ {
+		copy(pgs[i][:], buf[16+i*2:18+i*2])
+	}
+	return pgs
 }
