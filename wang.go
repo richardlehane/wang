@@ -2,6 +2,7 @@ package wang
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -135,31 +136,20 @@ func (r *Reader) DumpFiles() error {
 				if err != nil {
 					return err
 				}
-			}
-		}
-
-		for !l.zero() {
-
-			copy(l[:], byt)
-			switch jidx {
-			case 0:
-				f, _, err := file(byt)
-				if err != nil {
-					return err
+				copy(l[:], byt)
+				len := int(byt[3])
+				if len > 256 {
+					return errors.New("bad length")
 				}
-				fname = f.Name
-			case 1:
-			default:
-				byt = trunc(byt)
+				byt = trunc(byt[:len])
 				_, err = buf.Write(byt)
 				if err != nil {
 					return err
 				}
+				if len < 256 {
+					break
+				}
 			}
-			if err != nil {
-				return err
-			}
-			jidx++
 		}
 		err := os.WriteFile(fname, buf.Bytes(), 0777)
 		if err != nil {
