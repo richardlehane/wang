@@ -113,8 +113,6 @@ func (r *Reader) DumpSectors() error {
 			if err != nil {
 				return err
 			}
-			fmt.Println(len(byt))
-			fmt.Println(byt[0:20])
 			err = os.WriteFile(filepath.Join(fld, fmt.Sprintf("%02d.dmp", jidx)), byt, 0777)
 			if err != nil {
 				return err
@@ -135,18 +133,20 @@ func (r *Reader) DumpFiles(path string) error {
 				if err != nil {
 					return err
 				}
-				copy(l[:], byt)
-				len := int(byt[2])
-				if len > 255 {
+				if len(byt) < 7 {
+					return errors.New("bad sector")
+				}
+				copy(l[:], byt) // take the next location
+				length := int(byt[2])
+				if length > 255 {
 					return errors.New("bad length")
 				}
-				byt = trunc(byt[:len])
+				byt = byt[7 : length+1]
 				_, err = buf.Write(byt)
 				if err != nil {
 					return err
 				}
-				if len < 255 {
-					fmt.Printf("breaking, len is %d\n", len)
+				if length < 255 {
 					break
 				}
 			}
