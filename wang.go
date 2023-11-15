@@ -146,7 +146,7 @@ func (r *Reader) DumpFiles(path string) error {
 				if err != nil {
 					return err
 				}
-				if length < 255 {
+				if length < 255 { // not best way to handle this: what if length of last page is 256 bytes?
 					break
 				}
 			}
