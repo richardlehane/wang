@@ -126,9 +126,8 @@ func (r *Reader) DumpSectors() error {
 	return nil
 }
 
-func (r *Reader) DumpFiles() error {
+func (r *Reader) DumpFiles(path string) error {
 	for _, f := range r.Files {
-		var fname string
 		buf := &bytes.Buffer{}
 		for _, l := range f.pages {
 			for {
@@ -137,8 +136,8 @@ func (r *Reader) DumpFiles() error {
 					return err
 				}
 				copy(l[:], byt)
-				len := int(byt[3])
-				if len > 256 {
+				len := int(byt[2])
+				if len > 255 {
 					return errors.New("bad length")
 				}
 				byt = trunc(byt[:len])
@@ -146,12 +145,13 @@ func (r *Reader) DumpFiles() error {
 				if err != nil {
 					return err
 				}
-				if len < 256 {
+				if len < 255 {
+					fmt.Printf("breaking, len is %d\n", len)
 					break
 				}
 			}
 		}
-		err := os.WriteFile(fname, buf.Bytes(), 0777)
+		err := os.WriteFile(filepath.Join(path, f.Name), buf.Bytes(), 0777)
 		if err != nil {
 			return err
 		}
@@ -275,6 +275,9 @@ type header struct {
 }
 
 func trunc(buf []byte) []byte {
+	if len(buf) < 3 {
+		return []byte{}
+	}
 	len := int(buf[3])
 	if len < 8 {
 		return []byte{}

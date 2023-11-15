@@ -30,7 +30,7 @@ func main() {
 	case "dump":
 		err = rdr.DumpSectors()
 	case "files":
-		err = rdr.DumpFiles()
+		err = rdr.DumpFiles("")
 	case "scan":
 		mp := rdr.Scan()
 		for k, v := range mp {

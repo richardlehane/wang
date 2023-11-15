@@ -1,6 +1,7 @@
 package wang
 
 import (
+	"os"
 	"testing"
 )
 
@@ -40,4 +41,25 @@ func TestDate(t *testing.T) {
 	if ti.Format(timefmt) != "05.18.89 16:04" {
 		t.Fatal(ti)
 	}
+}
+
+func TestDump(t *testing.T) {
+	_ = os.RemoveAll("examples/DAR-0015")
+	if err := os.Mkdir("examples/DAR-0015", 0777); err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.Open("examples/DAR-0015-001.img")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	rdr, err := New(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = rdr.DumpFiles("examples/DAR-0015")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Fail()
 }
