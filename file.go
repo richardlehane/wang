@@ -1,7 +1,9 @@
 package wang
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 )
@@ -16,6 +18,11 @@ type File struct {
 	Created   time.Time
 	Modified  time.Time
 	pages     []loc
+	pgMap     map[loc]struct{}
+	pgIdx     int // page index
+	sect      loc // current sector
+	secIdx    int // index within sector
+	r         *Reader
 }
 
 func (f *File) String() string {
@@ -74,4 +81,56 @@ func pages(buf []byte) []loc {
 		copy(pgs[i][:], buf[16+i*2:18+i*2])
 	}
 	return pgs
+}
+
+// Read implements the io.Reader interface
+func (f *File) Read(b []byte) (int, error) {
+	var idx, n int
+	if f.pgIdx >= len(f.pages) {
+		return n, io.EOF
+	}
+	ploc := f.pages[f.pgIdx]
+	if f.sect.zero() {
+		f.sect = ploc
+	}
+	for {
+		for {
+			byt, err := f.r.sector(f.sect)
+			if err != nil {
+				return n, err
+			}
+			var nxt loc
+			copy(nxt[:], byt) // take the next location
+			length := int(byt[2])
+			if length > 255 {
+				return n, errors.New("bad length")
+			}
+			byt = byt[7 : length+1]
+			byt = byt[f.secIdx:]
+			rem := len(b) - idx
+			if rem < 1 {
+				return n, nil
+			}
+			cp := copy(b[idx:], byt)
+			n += cp
+			idx += cp
+			if cp < len(byt) {
+				f.secIdx = cp
+				return n, nil
+			}
+			f.secIdx = 0
+			f.sect = nxt
+			if _, ok := f.pgMap[f.sect]; ok { // if the next location is one of our page locations, we're done for the current page
+				break
+			}
+		}
+		f.pgIdx += 1
+		if f.pgIdx < len(f.pages) { // if we have more pages, increment the page and sector
+			ploc = f.pages[f.pgIdx]
+			f.sect = ploc
+		} else {
+			break
+		}
+	}
+	return n, io.EOF
 }

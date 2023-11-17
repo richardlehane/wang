@@ -1,7 +1,6 @@
 package wang
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -59,6 +58,12 @@ func New(ra io.ReaderAt) (*Reader, error) {
 			return nil, err
 		}
 		f.pages = pages(buf)
+		f.pgMap = make(map[loc]struct{})
+		f.pgMap[loc{}] = struct{}{} // include the empty location (for last page in a file)
+		for _, l := range f.pages {
+			f.pgMap[l] = struct{}{}
+		}
+		f.r = rdr
 		rdr.Files[idx] = f
 	}
 	return rdr, nil
@@ -138,34 +143,10 @@ func (r *Reader) DumpSectors(path string) error {
 // DumpFiles writes all files in the Wang disk to the path directory
 func (r *Reader) DumpFiles(path string) error {
 	for _, f := range r.Files {
-		pmap := make(map[loc]struct{})
-		pmap[loc{}] = struct{}{} // include the empty location (for last page in a file)
-		for _, l := range f.pages {
-			pmap[l] = struct{}{}
+		buf, err := io.ReadAll(f)
+		if err == nil {
+			err = os.WriteFile(filepath.Join(path, f.Name), buf, 0777)
 		}
-		buf := &bytes.Buffer{}
-		for _, l := range f.pages {
-			for {
-				byt, err := r.sector(l)
-				if err != nil {
-					return err
-				}
-				copy(l[:], byt) // take the next location
-				length := int(byt[2])
-				if length > 255 {
-					return errors.New("bad length")
-				}
-				byt = byt[7 : length+1]
-				_, err = buf.Write(byt)
-				if err != nil {
-					return err
-				}
-				if _, ok := pmap[l]; ok { // if the next location is one of our page locations, we're done for the current page
-					break
-				}
-			}
-		}
-		err := os.WriteFile(filepath.Join(path, f.Name), buf.Bytes(), 0777)
 		if err != nil {
 			return err
 		}
