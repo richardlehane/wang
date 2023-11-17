@@ -59,22 +59,22 @@ exclamation and question marks):
 Hex
 Code	1_  2_  3_  4_  5_  6_  7_
 
- _0	a^  SPC  0   @   P  !*   p
- _1	e^   !   1   A   Q   a   q
- _2	i^   "   2   B   R   b   r
- _3	o^   #   3   C   S   c   s
- _4	u^   $   4   D   T   d   t
- _5	a"   %   5   E   U   e   u
+ _0	    a^  SPC  0   @   P  !*   p
+ _1	    e^   !   1   A   Q   a   q
+ _2	    i^   "   2   B   R   b   r
+ _3	    o^   #   3   C   S   c   s
+ _4	    u^   $   4   D   T   d   t
+ _5	    a"   %   5   E   U   e   u
  _6 	e"   &   6   F   V   f   v
- _7	i"   '   7   G   W   g   w
- _8	o"   (   8   H   X   h   x
- _9	u"   )   9   I   Y   i   y
- _A	a`   *   :   J   Z   j   z
- _B	e`   +   ;   K   [   k  a'
- _C	i`   ,   <   L  N~   l  e'
- _D	o`   -   =   M   ]   o  i'
- _E	u`   .   >   N  n~   n  o'
- _F	c,   /   ?   O  ?*   o  u'
+ _7	    i"   '   7   G   W   g   w
+ _8	    o"   (   8   H   X   h   x
+ _9	    u"   )   9   I   Y   i   y
+ _A	    a`   *   :   J   Z   j   z
+ _B	    e`   +   ;   K   [   k  a'
+ _C	    i`   ,   <   L  N~   l  e'
+ _D	    o`   -   =   M   ]   o  i'
+ _E	    u`   .   >   N  n~   n  o'
+ _F	    c,   /   ?   O  ?*   o  u'
 
 For all the above characters (and for some "control" codes explained
 below), WP uses the eighth (highest) bit as a flag for underlining;
