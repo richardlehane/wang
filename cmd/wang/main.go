@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
 	"os"
 
@@ -26,6 +27,24 @@ func main() {
 	case "meta":
 		for _, f := range rdr.Files {
 			fmt.Println(f)
+		}
+	case "csv":
+		c := csv.NewWriter(os.Stdout)
+		err = c.Write([]string{"Archive ID",
+			"Document Name",
+			"Author",
+			"Operator",
+			"Comments",
+			"Created",
+			"Modified",
+		})
+		if err == nil {
+			for _, f := range rdr.Files {
+				err = c.Write(f.CSV())
+				if err != nil {
+					break
+				}
+			}
 		}
 	case "dump":
 		err = rdr.DumpSectors("")

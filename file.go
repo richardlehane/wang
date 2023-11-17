@@ -38,6 +38,10 @@ func (f *File) String() string {
 		f.DocID.String(), f.ArchiveID, f.Name, f.Author, f.Operator, f.Comment, f.Created, f.Modified)
 }
 
+func (f *File) CSV() []string {
+	return []string{f.DocID.String(), f.ArchiveID, f.Name, f.Author, f.Operator, f.Comment, f.Created.String(), f.Modified.String()}
+}
+
 func file(buf []byte) (*File, loc, error) {
 	if len(buf) < secsz {
 		return nil, loc{}, fmt.Errorf("sector not big enough for file metadata: %d", len(buf))
