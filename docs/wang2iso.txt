@@ -1,0 +1,456 @@
+
+	   File Format Documentation for UN Parallel Texts
+			     Version 1.0
+
+			    by David Graff
+		      Linguistic Data Consortium
+		      University of Pennsylvania
+
+			    March 3, 1994
+
+
+
+0.  Introduction:
+-----------------
+
+The UN Parallel Text corpus is drawn from the Wang system archives of
+the United Nations in New York.  In order to provide these data in a
+format suitable for research, a C program was developed to extract the
+text from the original Wang WP document files, and transliterate it
+into an SGML format using the ISO Latin1 (8859-1) character set.  In
+addition to the text data, all page layout information that could be
+relevant was preserved as well; for example, underlining, bold font,
+indentation and tabs are often used by UN typists to mark specific
+kinds of information in the text, such as headings, references to
+documents, and so on, and such objects are often found to be marked
+similarly across languages.  Therefore, suitable SGML tags were
+developed and used to mark the occurrence of these layout options.
+For those researchers who consider such typological markup
+unnecessary, the use of SGML forms makes it easy to eliminate them
+from the text files, and a sample script (for use with the UNIX "sed"
+command) has been provided that can be used to remove or replace all
+SGML markup in the data.
+
+Each data file on this disk represents one UN document.  Files vary in
+size from 8 to 256 Kbytes, with the average size somewhere around 32
+Kbytes.
+
+
+1.  The Wang WP Character Set:
+------------------------------
+
+In order to understand the intent of the SGML markup employed in these
+files, it is helpful to have an idea of the Wang WP format from which
+it was derived.
+
+A variety of ASCII-based character sets are available for use with WP;
+it appears that all the documents collected so far UN use a single
+character set identified as the "Wang ASCII World Languages Character
+Set."  It is "ASCII" in the sense of having the digits, basic
+punctuation marks, and the unaccented upper and lower case alphabet in
+the same 7-bit arrangement found in the standard ASCII (and ISO 646)
+character set, but the ASCII control codes (0x00 - 0x1f and 0xff) are
+not present as such, and some miscellaneous characters (eight of them:
+{}~`^\|_ ) are not provided.  The printing character set is shown in
+the table below (diacritic marks in the table are shown after the
+associated character, !* and ?* represent inverted versions of the
+exclamation and question marks):
+
+Hex
+Code	1_  2_  3_  4_  5_  6_  7_
+
+ _0	a^  SPC  0   @   P  !*   p
+ _1	e^   !   1   A   Q   a   q
+ _2	i^   "   2   B   R   b   r
+ _3	o^   #   3   C   S   c   s
+ _4	u^   $   4   D   T   d   t
+ _5	a"   %   5   E   U   e   u
+ _6 	e"   &   6   F   V   f   v
+ _7	i"   '   7   G   W   g   w
+ _8	o"   (   8   H   X   h   x
+ _9	u"   )   9   I   Y   i   y
+ _A	a`   *   :   J   Z   j   z
+ _B	e`   +   ;   K   [   k  a'
+ _C	i`   ,   <   L  N~   l  e'
+ _D	o`   -   =   M   ]   o  i'
+ _E	u`   .   >   N  n~   n  o'
+ _F	c,   /   ?   O  ?*   o  u'
+
+For all the above characters (and for some "control" codes explained
+below), WP uses the eighth (highest) bit as a flag for underlining;
+that is, the character values 0x90 to 0xff represent the same
+characters as 0x10 through 0x7f, but with an underline included.  Note
+that the four sets of accented vowels and the "c-cedilla" are provided
+in lower case only.
+
+The first sixteen codes (0x00 - 0x0f, and in the "underlined" set,
+0x80 - 0x8f) are used for text format control and for some specialized
+characters.  It appears that a number of these codes are not used at
+all.  The control characters that are found in the data, and for which
+a function is evident, are listed below.  The quoted names associated
+with these codes are derived from Wang documentation, but the
+explanations have, with only a few exceptions, been deduced from both
+the apparent distribution of the codes in the documents and the
+apparent meaning of the code name.
+
+Code	Definition
+
+0x01	"center"; found at beginnings of lines to flag line centering
+		(e.g. for title lines)
+
+0x02	"tab"; horizontal tab character; also used in Format Lines to
+		indicate locations of tab stops
+
+0x03	"return"; produces <CR><LF> sequence; terminates a centered
+		line, a paragraph, an indented block and a format
+		line; can be repeated to produce multiple blank lines
+
+0x04	"indent"; marks the start of an indented block (wrapped lines
+		are shifted leftward one tab stop relative to current
+		left margin or indent level)
+
+0x05	"dec tab"; used primarily in tables, where numeric strings
+		must be right-justified in successive columns; this
+		character is placed between columns of the table
+
+0x06	"format"; marks the beginning of a "Format Line", which
+		specifies the line width and tab stops for following
+		text (0x02 "tabs" are used to indicate tab stops, 0x20
+		"spaces" are used to fill the line, and 0x03 "return"
+		is used to set the right margin and terminate the
+		Format Line)
+
+0x07	apparently used in UN files to print vertical lines (borders
+		around a special section of text or lines between
+		columns in a table); there is an underlined version
+
+0x08	apparently used by UN and ILO to print a raised circle (e.g.
+		as a "degrees" mark); there is an underlined version
+
+0x09	its distribution in sample files suggests that it is
+		interpreted as a "non-breaking space" character - i.e.
+		a space where line breaking or space expansion is not
+		allowed (similarly for "underlined" version 0x89)
+
+0x0a	used in UN files to print the British "pounds" (monetary)
+		sign.
+
+0x0c	"note"; found rarely in UN files containing tables, in which
+		the code is used to bracket a "bottom line" of numeric
+		values; it's actual effect on output is not clear
+
+0x0e	"superscript"; used to flag the start of a "raised" character
+		sequence, such as footnote index numbers
+
+0x0f	"subscript"; used to flag the end of a "raised" character
+		sequence (or, presumably, the beginning of a "lowered"
+		character sequence, though this usage does not occur)
+
+0x86	"page"; produces a page break and marks the beginning of a
+		"Format Line" (same as described for 0x06 above); this
+		character is always positioned as the first text
+		character in a record block
+
+0x87	"underlined" version of a vertical line, apparently used to
+		mark a horizontal division by joining with
+		"underlined" space characters
+
+0x88	"underlined" version of raised circle
+
+0x89	"underlined" version of a non-breaking space
+
+0x8e	its distribution suggests that it is used to bracket a special
+		graphic rendition of characters, such as "bold" or
+		"italic" -- first occurrence turns on the special
+		rendition, next occurrence turns it off
+
+0x8f	appears (so far) only in UN data, as a means of generating an
+		o-slash or O-slash; this involves a three-character
+		sequence: 0x8f 0x8f 0xcf (for upper case) or 0x8f 0x8f
+		0xed (lower case); apparently, this method of special
+		character encoding supersedes the use of the 8th bit
+		as a flag for underlining (the 0xcf and 0xed
+		characters would otherwise be 0x6f and 0x7d, for ``O''
+		and ``o'', respectively), as a result, [Oo]-slash
+		cannot occur in "underlined" form.
+
+The following codes are found to occur rarely or not at all within the
+text portions of the data (some are identified by name in the
+available Wang documentation, but no further explanation is given; the
+names are shown next to the code): 0x00 (null byte; Wang documentation
+says it should be ignored), 0x0b (stop), 0x0d (merge), 0x80 - 0x85,
+0x8a - 0x8c, 0x8d (don't merge).  These codes were ignored in the
+creation of the SGML-formatted files.
+
+
+2.  SGML File Specifications
+------------------------------
+
+2.1  Record Structure
+
+The SGML output is always a standard UNIX text file : it consists
+entirely of variable-length records containing printing and
+white-space characters and terminated by '\n' (newline) characters
+(i.e. each "record" is simply a character string representing one line
+of text).
+
+Maximum record length (i.e. maximum line width) is based loosely on
+the Wang Format Line specifications contained in the input file; since
+a single WP file may contain numerous Format Lines of various lengths,
+the line width of the output varies accordingly.  (In the UN data,
+some WP files contained tables ranging up to 148 characters wide.)
+Empty records (i.e. blank lines) are output in accordance with the
+occurrence of adjacent Wang "return" codes (0x03) in the input file --
+that is, two or more "return" characters read in succession yielded
+one or more blank lines in the output.  Thus, the overall layout of
+the output file roughly approximates what might be observed in a
+direct print-out of the WP file on an actual Wang system.
+
+This approximation of printed format, however, is far from perfect,
+for several reasons.  First, there is no way to be certain that the
+line breaks inserted by this program are identical to what a Wang
+system would produce; also, the counting of characters per line for
+the purpose of line wrapping did not include the insertion of SGML
+tags and entity names.  Therefore, a given output line can extend well
+beyond the current Format Line width if the line contains numerous
+SGML insertions.  Even with this variability, however, maximum line
+width in the output would never exceed 255 characters.
+
+Second, no attempt was made to replicate the positioning of text
+according to tab stops, and the tab character itself, when encountered
+on input, was rendered to the output file by the expanded SGML entity
+name ``&htab;'' in order to protect it from confusion (or
+substitution) with space characters.  Similarly, the "dec tab"
+character, used to right-justify columns in a table, is conveyed by
+the string ``&dtab;'', and no effort is made to provide vertical
+alignment of the strings separated by this character.  The "indent"
+character is also conveyed via SGML tags that bracket the text unit
+(word, line or paragraph) affected by the indentation, and no other
+means are employed to treat an indented segment differently from other
+text (e.g. by using initial spaces on a line).
+
+And, ultimately, the insertion of SGML entity and element names in the
+output stream (both within and between words) makes it impractical to
+pursue a careful preservation of the layout dictated by the WP control
+codes; instead, the output merely conveys, via markup tags and
+successive line-feed characters, the presence of the control codes
+themselves.  All WP Format Lines containing a new or modified layout
+in the WP file are fully conveyed as special SGML objects, so that all
+information needed to reconstruct the text layout is present.  One
+piece of information that is missing, however, is the specification of
+page length in terms of lines per page; this shortfall is mitigated by
+the fact that all significant page breaks -- those corresponding to
+structural or functional breaks in the text -- are explicitly marked
+using the WP page-break control code (0x86), and these are preserved
+in the output by the SGML tag <pg.brk>.  (Explicit page breaks have
+also been observed at points in the text where there was no functional
+or structural break in the content -- conventions of usage among UN
+typists appear to vary on this and other issues of typographic
+formatting.)
+
+
+2.2  Character Set
+
+The SGML-formatted data in this corpus are non-standard text files in
+the sense that they use a full 8-bit character set (ISO 8859-1
+"Latin1"), in which the "non-ASCII" characters listed above in the
+Wang character set table are encoded as single (unsigned) byte values
+in the range between 160 (0xa0) and 255 (0xff).  The table below
+summarizes the character codes applied (unfilled cells indicate unused
+codes, +o is raised-circle, LB is the pound-sign, other entries are as
+indicated in the Wang character table):
+
+Hex
+Code	  a_    b_  c_  d_  e_  f_
+
+ _0     NB SPC  +o          a`
+ _1       !*            N~  a'  n~
+ _2                         a^  o`
+ _3       LB                a~  o'
+ _4                         a"  o^
+ _5                             o~
+ _6                             o"
+ _7                         c,
+ _8                     O/  e`  o/
+ _9                         e'  u`
+ _A                         e^  u'
+ _B                         e"  u^
+ _C                         i`  u"
+ _D                         i'
+ _E                         i^
+ _F             ?*          i"
+
+As indicated previously, the WP "return" control character (0x03) is
+preserved in the output as the ASCII line-feed character.  One
+possible drawback of the SGML formatting strategy used here is that no
+explicit distinction is made between line-feeds inserted to wrap lines
+within a paragraph and line-feeds that are translated from the WP
+"return" code; it is generally the case that the distinction is
+evident within the context of the documents.  (Because the SGML format
+was produced in a UNIX environment, the ASCII carriage-return
+character (^M, 0x0d) is not present at all in the data; rather, every
+line-feed character implies the presence of a carriage-return
+associated with it.)
+
+Other WP control characters, along with other features of the WP file,
+are conveyed using appropriate SGML tags and entities, which are
+described in the next section.
+
+
+2.3  SGML Usage
+
+SGML tags are employed here to serve three distinct purposes: (1) to
+convey data from the header records of the Wang files that are
+external to the document proper, (2) to delimit the content of initial
+"pages" that received special treatment in the UN's Wang WP program,
+and (3) to preserve text-formatting information that would otherwise
+be lost in the translation out of the Wang character set (i.e. the
+formatting imposed by the Wang control characters described
+previously).  It may be noted that the first two purposes provide a
+somewhat more "functional" or "descriptive" mark-up (even though the
+"functions" or semantics of header fields and different types of
+"pages" have not been fully understood throughout this process),
+whereas the third purpose leads to a more "formal" or "presentational"
+mark-up (involving things like line width, tab stops, indentation,
+etc).  The tags applied in each of these functions are described below
+in detail.
+
+
+2.3.1  Wang Header Material
+
+Each Wang WP file contained 36 fixed-length character strings in a
+non-printable header block.  These fields consist of four alphanumeric
+strings of 20 or 25 characters each, followed by 32 shorter digit
+strings (2 to 6 digits each); the digit strings appear to group into
+three distinct date/time specifications (month - date - year - hours -
+minutes, all 2-digit values), each followed by two or more other
+values whose meanings are not known (the relevance of the various
+dates is not known either).  All 36 fields are written to the output
+file in the manner detailed below.
+
+The header data is enclosed between the tags <hdrblk> ... </hdrblk>.
+Each of the four longer strings is presented in full on a separate
+line immediately bracketed by the tags <string.#> ...  </string.#>,
+where '#' is 0, 1, 2 or 3 to identify each string separately.  With
+regard to content, it appears that the first string (enclosed by the
+<string.0> tag) is consistently used as a document or file title that
+is descriptive of the file's text (the only exceptions appear to be a
+few files in which this field is empty); usage in the remaining fields
+is patchy, inconsistent, and often unenlightening.
+
+The 32 numeric fields are treated somewhat differently.  As with the
+string fields, all characters are conveyed to the output file.
+However, given the apparent grouping of numeric fields (i.e. into
+dates and times), the fields are not individually tagged, but are
+rather presented together in groups of 6 to 10 values per line; the
+values are separated by single space characters.  Each line is
+bracketed with the tags <nums.#> ... </nums.#>, in a manner
+parallel to the string fields.  The four lines of numerics are
+bracketed by <numstrs> ... </numstrs>.
+
+The following gives an example of a complete header block as presented
+in the output file (this is from an ILO file):
+
+	<hdrblk>
+	<filenam>1000x</filenam>
+	<str.0>Report III(4A)           </str.0>
+	<str.1>TB-125/4            </str.1>
+	<str.2>APPL/Ingunza        </str.2>
+	<str.3>                    </str.3>
+	<numstrs>
+	<nums.0> 08 05 87 12 14       7    795 </nums.0>
+	<nums.1> 08 05 92 15 43      02      7 </nums.1>
+	<nums.2> 04 15 92 11 00 00 00 00 00 00 </nums.2>
+	<nums.3>        23    4 06   940  24826 </nums.3>
+	</numstrs>
+	</hdrblk>
+
+Note that the digit strings tend to be right-justified in their
+fields, and that both spaces and zeros may be used to fill "empty"
+columns and fields (the difference between spaces and leading
+zeros is probably accidental).
+
+
+2.3.2  Preliminary Page Material
+
+Near the beginning of each Wang WP file there is an explicit list of
+the locations of all page breaks in the file, and the list is arranged
+in a manner that suggests there is some functional distinction drawn
+in some cases between the initial 1 to 3 page breaks of the file and
+all the remaining ones.  A frequently observed (but not regularly
+maintained) functional distinction involves a separation between a
+title page and one or two page heading formats on the one hand, and
+the body of the document on the other. On occasion, however, we have
+observed a large amount of coherent text starting in a "preliminary"
+page, followed by a (presumably distinct) text beginning in the first
+"body" page; in such cases, the text contained in the preliminary
+portion is lengthy enough itself to span a number of pages, but it
+contains no explicit page breaks.  (If it did, they presumably would
+have been listed somehow in the WP page-list record.)
+
+In order to preserve the apparent functional division between these
+two "types" of "pages" (or types of page breaks), we have inserted the
+tags <unpag> ...  </unpag> to bracket the contents of the preliminary
+pages.
+
+
+2.3.3  Formatting Markup
+
+The following table lists the SGML entities and tags that are inserted
+as a result of the various WP formatting control codes.
+
+  Wang Code           SGML Form
+
+ 0x01 "center"        <cl> ... </cl>
+ 0x02 "tab"           &htab;      
+ 0x04 "indent"        <ind> ... </ind>
+ 0x05 "dec tab"       &dtab;      
+ 0x06 "Format Line"   <format lnspc=...> ... </format>
+ 0x0c "note"          &note;      
+ 0x0e "superscript"   <shftup>  OR </shftdn>
+ 0x0f "subscript"     </shftup> OR <shftdn>
+ 0x86 "page"          <pg.brk> [ <format> ... </format> ]
+ 0x8e [bold font]     <emph> ... </emph>
+ [underlining]        <ul> ... </ul>
+
+Please note the following regarding the usage of these SGML forms:
+
+The output for every file is bounded by <DOC> and </DOC> tags, which
+are alone on the first and last lines, respectively.
+
+Whenever one tag is nested within another (e.g. <cl><ul>...), the
+end tag for the nested element is properly included to ensure SGML
+parsibility (i.e. ...</ul></cl>).
+
+Multiple <ind> tags may be found in an "nesting" arrangement,
+indicating successive levels of indentation.  All <ind> levels are
+terminated by a single </ind> tag.
+
+The <format> tag is always provided with a "lnspc" attribute, which is
+assigned one of the following values: "ovrstr", "0.25", "0.5", "1.0",
+"1.5" "2.0", or "3.0", based on a code value contained in the WP
+Format Line construct.  The material enclosed between the <format> ...
+</format> tags consists entirely of a single line containing only the
+characters 'T' (to mark tab stops) and '.'  (period, to mark spacing
+between tab stops); the line is terminated with 'R' to mark the
+position of the right margin.  For example:
+
+<format lnspc=1.0>
+...T....T....T................T...........T.........T...............R
+</format>
+
+This construct was included in the SGML file when the first WP Format
+Line is encountered, and whenever a subsequent Format Line differs in
+any way from the preceding one.
+
+The handling of the "superscript" and "subscript" codes assumes, based
+on observation, that these are always used in a complementary manner
+to bracket sections of text: whichever one is used first to shift the
+position of characters, the other must be used afterwards to return
+output to the normal line position.
+
+A complete SGML DTD and Character Set Specification for the UN SGML
+tagging scheme has been provided in the files "wang2iso.dtd" and
+"wang2iso.chr"; these have been adapted from originals that were
+provided by David McKelvie of the HCRC in Edinburgh, Scotland.
+
