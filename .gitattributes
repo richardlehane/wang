@@ -1,0 +1,5 @@
+# Set default unix line endings
+
+* text eol=lf
+examples/** binary
+docs/** binary
