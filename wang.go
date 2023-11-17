@@ -7,12 +7,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 const (
-	secsz   = 256
-	blocksz = secsz * 8
-	chunksz = blocksz * 2
+	secsz   = 256        // the wang disks store date in 256 byte sectors
+	chunksz = secsz * 16 // 4096 - the wang disks use 4096 byte chunks in their locations
 	diroff  = secsz * 3
 
 	timefmt = "01.02.06 15:04"
@@ -24,8 +24,8 @@ func New(ra io.ReaderAt) (*Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	if rdr.csz < blocksz {
-		return nil, fmt.Errorf("file too small to be a wang, expect %d, got %d", blocksz, rdr.csz)
+	if rdr.csz < secsz*8 {
+		return nil, errors.New("file too small to be a wang, need at least 2048 bytes")
 	}
 	copy(rdr.archiveID[:], rdr.chunk[:3])
 	// check archiveID
@@ -64,7 +64,7 @@ func New(ra io.ReaderAt) (*Reader, error) {
 	return rdr, nil
 }
 
-// Reader provides sequential access to a wang img
+// Reader provides sequential access to a Wang disk image
 type Reader struct {
 	archiveID tag
 	contents  []dir
@@ -89,6 +89,7 @@ func (r *Reader) loadChunk(i int64) error {
 	return nil
 }
 
+// Sector returns a 256 byte slice for the sector at location l
 func (r *Reader) sector(l loc) ([]byte, error) {
 	if err := r.loadChunk(l.chunkoff()); err != nil {
 		return nil, err
@@ -99,42 +100,55 @@ func (r *Reader) sector(l loc) ([]byte, error) {
 	return r.chunk[l.secoff() : l.secoff()+secsz], nil
 }
 
-func (r *Reader) DumpSectors() error {
-	for idx, d := range r.contents {
-		fld := fmt.Sprintf("%02d", idx)
-		err := os.Mkdir(fld, 0777)
-		if err != nil && !os.IsExist(err) {
-			return err
+// DumpSectors checks all 256 byte sectors in the file for tags
+// Then dumps all 256 byte sectors for each tag.
+func (r *Reader) DumpSectors(path string) error {
+	start := loc{0, 4}
+	var err error
+	var byt []byte
+	smap := make(map[tag][]loc)
+	for byt, err = r.sector(start); err == nil; byt, err = r.sector(start) {
+		start = start.inc()
+		var t tag
+		copy(t[:], byt[4:7])
+		if t.zero() {
+			continue
 		}
-		var jidx int
-		l := d.l
-		for !l.zero() {
+		smap[t] = append(smap[t], start)
+	}
+	if err == io.EOF {
+		err = nil
+	}
+	if err != nil {
+		return err
+	}
+	for k, v := range smap {
+		_ = os.MkdirAll(filepath.Join(path, k.String()), 0777)
+		for _, l := range v {
 			byt, err := r.sector(l)
-			if err != nil {
+			if err != nil && err != io.EOF {
 				return err
 			}
-			err = os.WriteFile(filepath.Join(fld, fmt.Sprintf("%02d.dmp", jidx)), byt, 0777)
-			if err != nil {
-				return err
-			}
-			jidx++
-			copy(l[:], byt)
+			_ = os.WriteFile(filepath.Join(path, k.String(), strconv.Itoa(int(l.foff()))), byt, 0777)
 		}
 	}
-	return nil
+	return err
 }
 
+// DumpFiles writes all files in the Wang disk to the path directory
 func (r *Reader) DumpFiles(path string) error {
 	for _, f := range r.Files {
+		pmap := make(map[loc]struct{})
+		pmap[loc{}] = struct{}{} // include the empty location (for last page in a file)
+		for _, l := range f.pages {
+			pmap[l] = struct{}{}
+		}
 		buf := &bytes.Buffer{}
 		for _, l := range f.pages {
 			for {
 				byt, err := r.sector(l)
 				if err != nil {
 					return err
-				}
-				if len(byt) < 7 {
-					return errors.New("bad sector")
 				}
 				copy(l[:], byt) // take the next location
 				length := int(byt[2])
@@ -146,7 +160,7 @@ func (r *Reader) DumpFiles(path string) error {
 				if err != nil {
 					return err
 				}
-				if length < 255 { // not best way to handle this: what if length of last page is 256 bytes?
+				if _, ok := pmap[l]; ok { // if the next location is one of our page locations, we're done for the current page
 					break
 				}
 			}
@@ -159,57 +173,8 @@ func (r *Reader) DumpFiles(path string) error {
 	return nil
 }
 
-func (r *Reader) Scan() map[tag][3][]int64 {
-	llist := make(map[tag][]int64)
-	for _, d := range r.contents {
-		l := d.l
-		for !l.zero() {
-			llist[d.t] = append(llist[d.t], l.foff())
-			byt, err := r.sector(l)
-			if err != nil {
-				break
-			}
-			copy(l[:], byt)
-		}
-	}
-	llist2 := make(map[tag][]int64)
-	for k, v := range llist {
-		if len(v) < 2 {
-			continue
-		}
-		byt, err := r.sector(offToLoc(v[1]))
-		if err != nil {
-			continue
-		}
-		for i := 8; i < len(byt)-2; i = i + 2 {
-			nl := loc{}
-			copy(nl[:], byt[i:])
-			if !nl.zero() {
-				llist2[k] = append(llist2[k], nl.foff())
-			}
-		}
-	}
-	sectors := make(map[tag][]int64)
-	l := loc{0, 8}
-	for {
-		byt, err := r.sector(l)
-		if err != nil {
-			break
-		}
-		var t tag
-		copy(t[:], byt[4:7])
-		if !t.zero() {
-			sectors[t] = append(sectors[t], l.foff())
-		}
-		l = l.inc()
-	}
-	ret := make(map[tag][3][]int64)
-	for k, v := range llist {
-		ret[k] = [3][]int64{v, llist2[k], sectors[k]}
-	}
-	return ret
-}
-
+// Locations in Wang disks are stored in two bytes
+// To calculate the file offset multiply the first byte by 4096 and the second byte by 256
 type loc [2]byte
 
 func offToLoc(i int64) loc {
@@ -219,6 +184,7 @@ func offToLoc(i int64) loc {
 	return loc{byte(h), byte(l)}
 }
 
+// is the location empty
 func (l loc) zero() bool {
 	if l[0] == 0 && l[1] == 0 {
 		return true
@@ -248,39 +214,25 @@ func (l loc) foff() int64 {
 	return l.chunkoff() + int64(l.secoff())
 }
 
+// Tags are 3 byte unique identifiers for files.
+// They are in the file directory at the start of a Wang disk and also present at the start of each content sector.
 type tag [3]byte
 
 func (t tag) String() string {
 	return fmt.Sprintf("%02x%02x%c", t[0], t[1], t[2])
 }
 
+// empty sectors may be filled with 0 or 0xF6
 func (t tag) zero() bool {
-	if t[0] == 0 && t[1] == 0 && t[2] == 0 {
+	if (t[0] == 0 || t[0] == 0xF6) && (t[1] == 0 || t[1] == 0xF6) && (t[2] == 0 || t[2] == 0xF6) {
 		return true
 	}
 	return false
 }
 
+// directory entries start at 768 bytes
 type dir struct {
 	t tag
 	l loc
 	// plus one byte of padding
-}
-
-type header struct {
-	next      loc
-	sz        byte
-	something byte
-	t         tag
-}
-
-func trunc(buf []byte) []byte {
-	if len(buf) < 3 {
-		return []byte{}
-	}
-	len := int(buf[3])
-	if len < 8 {
-		return []byte{}
-	}
-	return buf[7:len]
 }

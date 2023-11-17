@@ -9,7 +9,7 @@ import (
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Print("Please supply a command (meta, dump, files or scan) and target\n")
+		fmt.Print("Please supply a command (meta, dump or files) and target\n")
 		os.Exit(1)
 	}
 	f, err := os.Open(os.Args[2])
@@ -28,18 +28,11 @@ func main() {
 			fmt.Println(f)
 		}
 	case "dump":
-		err = rdr.DumpSectors()
+		err = rdr.DumpSectors("")
 	case "files":
 		err = rdr.DumpFiles("")
-	case "scan":
-		mp := rdr.Scan()
-		for k, v := range mp {
-			fmt.Printf("%s:\n", k.String())
-			fmt.Printf("List (%d):\n%v\n\nInternal list (%d):\n%v\n\nRaw sectors (%d):\n%v\n\n\n",
-				len(v[0]), v[0], len(v[1]), v[1], len(v[2]), v[2])
-		}
 	default:
-		fmt.Print("Invalid command must be meta, dump, files, or scan\n")
+		fmt.Print("Invalid command must be meta, dump or files\n")
 		os.Exit(1)
 	}
 	if err != nil {

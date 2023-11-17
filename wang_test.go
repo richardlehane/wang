@@ -43,7 +43,7 @@ func TestDate(t *testing.T) {
 	}
 }
 
-func TestDump(t *testing.T) {
+func TestFile(t *testing.T) {
 	_ = os.RemoveAll("examples/DAR-0015")
 	if err := os.Mkdir("examples/DAR-0015", 0777); err != nil {
 		t.Fatal(err)
@@ -58,6 +58,26 @@ func TestDump(t *testing.T) {
 		t.Fatal(err)
 	}
 	err = rdr.DumpFiles("examples/DAR-0015")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSectors(t *testing.T) {
+	_ = os.RemoveAll("examples/DAR-0015/sectors")
+	if err := os.Mkdir("examples/DAR-0015/sectors", 0777); err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.Open("examples/DAR-0015-001.img")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	rdr, err := New(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = rdr.DumpSectors("examples/DAR-0015/sectors")
 	if err != nil {
 		t.Fatal(err)
 	}
