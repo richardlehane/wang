@@ -1,6 +1,15 @@
-Hi! Welcome to Wang Go, a program written in Go to help access information held on disks formatted as a Wang "Archive Diskette." (For more information on the Archive Diskette see Chapter 8 here: https://www.wang2200.org/docs/software/2200WordProcessingOperatorsGuide.700-6937.6-82.pdf.)
+# Wang
 
-There are four basic commands meta, dump, files, or scan.
-Meta will print the metadata of the disk itself and the word processing files contained on it, including information on Document ID, Archive ID, Document Name, Author, Operator, Comments, Created (creation date), Modified (date modified).
+This code inspects and carves files from disks formatted as a Wang "Archive Diskette" (see Chapter 8: [https://www.wang2200.org/docs/software/2200WordProcessingOperatorsGuide.700-6937.6-82.pdf](https://www.wang2200.org/docs/software/2200WordProcessingOperatorsGuide.700-6937.6-82.pdf)).
 
-Files attempts to dump the contents as text files. Currently, it does not accurately replicate the Word Processing documents.
+## Install
+
+Install go: [https://go.dev/doc/install](https://go.dev/doc/install)
+
+Run `go install github.com/richardlehane/wang/cmd/wang@latest`
+
+## Usage
+
+    wang meta DISK.IMG    // Provides a directory listing for DISK.IMG
+    wang files DISK.IMG   // Extracts files into the working directory
+    wang dump DISK.IMG    // Dumps sectors with tagged content into the working directory 
