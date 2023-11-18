@@ -44,8 +44,8 @@ func TestDate(t *testing.T) {
 }
 
 func TestFile(t *testing.T) {
-	_ = os.RemoveAll("examples/DAR-0015")
-	if err := os.Mkdir("examples/DAR-0015", 0777); err != nil {
+	_ = os.RemoveAll("examples/DAR-0015/files")
+	if err := os.MkdirAll("examples/DAR-0015/files", 0777); err != nil {
 		t.Fatal(err)
 	}
 	f, err := os.Open("examples/DAR-0015-001.img")
@@ -57,7 +57,7 @@ func TestFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = rdr.DumpFiles("examples/DAR-0015")
+	err = rdr.DumpFiles("examples/DAR-0015/files")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,5 +80,22 @@ func TestSectors(t *testing.T) {
 	err = rdr.DumpSectors("examples/DAR-0015/sectors")
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestDecode(t *testing.T) {
+	f, err := os.Open("examples/DAR-0015-001.img")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	rdr, err := New(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dec := NewDecoder(rdr.Files[0])
+	tok, _ := dec.Token()
+	if tok.Off != 256 {
+		t.Fatalf("Expecting %d, got %d", 256, tok.Off)
 	}
 }
