@@ -143,6 +143,10 @@ func (d *Decoder) Token() (Token, error) {
 	}
 	for {
 		for _, c := range d.rbuf {
+			switch c {
+			case centre:
+				return Token{Typ: TokenCentre}, nil
+			}
 			_ = c
 			d.fIdx += 1
 		}
