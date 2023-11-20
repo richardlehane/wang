@@ -1,0 +1,191 @@
+
+CMC MANAGEMENT REPORTING 1988			Attachment 1
+FOR  LIBRARY SERVICES				
+
+
+
+           COMPUTER SERVICES RESULTS AND ACTUAL RESOURCE UTILIZATION IN 1988
+
+
+I.	Application Support
+
+	1.	Planned Work: Production cycle back-up
+
+			Achieved: The back-up was provided when necessary
+                                  and at a good level
+
+
+
+			Partially achieved:  Reason ...
+
+
+
+			Not achieved:  Reason ...
+
+
+
+	2.	Work accomplished but not foreseen in Application Planning:
+
+
+
+II.	Resource Utilization in 1988
+----------------------------------------------------------------------------------------
+Central Mainframe	 Central Programmer	4 User Programmer	5 Ded. Equip.
+      CPU Hours	     Man-Days	     Man-Days	      $
+ 1FP         Actual	  FP       Actual	FP        Actual	  FP      Actual
+
+2SPP 3SON   SPP   SON
+-------------------------------------------------------------------------------------
+ 130     80     240   107     20       2       2 man/yrs.  2man/yrs. a) 12,000   10,704
+                                                                     b) 21,000   55,000
+					                              c)  9,000    8,500
+
+                                               *Ded.eq.: a)leased; b)purchased; c)maint. 
+----------------------------------------------------------------------------------------
+
+1 FP = Financial Plan.
+2 SPP = Shared Prime Processing.
+3 SON = Shared Overnight Processing.
+4 Manpower in user area devoted to
+     programming and analysis.
+5 Total funds spent on dedicated equipment (Purchase, Lease,
+  Rental, Maintenance), ie. not funded from the Computer Section Budget.
+
+
+
+
+CMC MANAGEMENT REPORTING 1988			Attachment 2
+FOR  LIBRARY SERVICES		
+
+
+III.	Dedicated Equipment
+
+--------------------------------------------------------------------------------------
+                                         FP        1 Actual   Actual Status
+                                         1988      1988         March 1989
+--------------------------------------------------------------------------------------
+
+     Wordprocessor Workstations          1         1                1
+
+     Printers                            1         1                1
+
+     VDU Terminals                      13        12               11
+
+     Personal Computers                  4         6                9
+
+            TOTAL:                     19          20             22
+--------------------------------------------------------------------------------------
+
+
+
+IV.	Effectiveness of New Equipment
+
+	Expectations MET:
+
+		YES:  Improvement in the staff work effeciency, various routine activities are being computerized. Acquisition of a CD-ROM player and two commercial bibliographic databases has improved considerably efficiency in acquisition work and reference services.
+
+
+		PARTIALLY:  Unfortunately, the lack of the mainframe connection for the PS/2-60 the PC (CS99/078) and the missing mouse caused difficulties in the work of the Reference librarians, forcing them to use workstations in other Library offices.
+
+
+		NO:   Reason ...
+
+
+1  We would be grateful if you could check the actual column
+      and correct as necessary.
+
+CMC MANAGEMENT REPORTING 1988		Attachment 3
+FOR  LIBRARY SERVICES		
+
+
+
+V.	General Comments on Computer Services
+
+	In general services provided by the Computer Section were good.
+
+The facility to access external databases and EARNET through the central computer is highly appreciated.
+
+	We appreciate very much the CS's decision to implement the IBM Cabling Scheme in the VIC Library.  We believe it will be mutually beneficial by providing a high level of flexibility in connecting computer workstations and by eliminating connection delays.
+
+	The Library is very enthusiastic about the Office Automation Project, which the Library joined in February. We feel that the CS is providing great support.  We look forward to its benefits of computerization.
+
+	The HELP Center courses attended by Library staff were useful and well taught.
+
+	The Global Computer Applications menu is a very good idea, improving considerably VIC staff awareness of information resources available through the Central Computer.
+
+	ADS1/ISIS software developed by CS/UNIDO has opened new horizons for wide distribution of VIC Library information through the VIC in a user friendly way.  ADS1/ISIS is a powerful system, but its users need system documentation badly.
+
+	Some problems:
+
+	-The problems with VSAM datasets and disk head crashes created serious problems for library services including loses of data.
+
+	-The mainframe response time sometimes is poor and creates inconveniences in Library services/staff work.
+
+	-We experience problems with use of TSO/SCRIPT.  The old
+	 setup has not worked since the 4-th quarter of 1988.
+	 No adequate instructions were received on the use of the
+	 new version of SCRIPT.
+
+	-Delays in delivery of some components for the Library's PS/2s (mouse,
+manuals) caused some inconveniences.
+
+
+
+	Suggestions:
+
+	We suggest that the Computer Section consider conducting USER MEETINGS (e.g. in one of Conference rooms in C07) on a regular basis in order:
+
+	-To inform users about general trends in computerization and
+	 steps/programs launched in the CS;
+
+	-To provide recent news of in-house computer services with comments,
+	 explanation of problems encountered (if needed);
+
+	-To discuss with users their needs/suggestions; to answer their
+	 questions. (It is not intended as a substitute for application planning
+	 meetings).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+VBabichev/HGabbert/eh-2619(9900G)

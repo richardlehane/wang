@@ -83,7 +83,11 @@ func TestSectors(t *testing.T) {
 	}
 }
 
-func TestDecode(t *testing.T) {
+func TestText(t *testing.T) {
+	_ = os.RemoveAll("examples/DAR-0015/text")
+	if err := os.Mkdir("examples/DAR-0015/text", 0777); err != nil {
+		t.Fatal(err)
+	}
 	f, err := os.Open("examples/DAR-0015-001.img")
 	if err != nil {
 		t.Fatal(err)
@@ -93,9 +97,8 @@ func TestDecode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dec := NewDecoder(rdr.Files[0])
-	tok, _ := dec.Token()
-	if tok.Off != 256 {
-		t.Fatalf("Expecting %d, got %d", 256, tok.Off)
+	err = rdr.DumpText("examples/DAR-0015/text")
+	if err != nil {
+		t.Fatal(err)
 	}
 }

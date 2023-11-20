@@ -1,6 +1,7 @@
 package wang
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -152,6 +153,22 @@ func (r *Reader) DumpFiles(path string) error {
 		}
 	}
 	return nil
+}
+
+func (r *Reader) DumpText(path string) error {
+	for _, f := range r.Files {
+		dec := NewDecoder(f)
+		buf := &bytes.Buffer{}
+		err := TextEncode(dec, buf)
+		if err == nil {
+			err = os.WriteFile(filepath.Join(path, f.Name+".txt"), buf.Bytes(), 0777)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+
 }
 
 // Locations in Wang disks are stored in two bytes
