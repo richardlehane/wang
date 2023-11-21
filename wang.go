@@ -114,13 +114,14 @@ func (r *Reader) DumpSectors(path string) error {
 	var byt []byte
 	smap := make(map[tag][]loc)
 	for byt, err = r.sector(start); err == nil; byt, err = r.sector(start) {
-		start = start.inc()
 		var t tag
 		copy(t[:], byt[4:7])
 		if t.zero() {
+			start = start.inc()
 			continue
 		}
 		smap[t] = append(smap[t], start)
+		start = start.inc()
 	}
 	if err == io.EOF {
 		err = nil
