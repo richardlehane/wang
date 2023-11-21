@@ -301,7 +301,7 @@ func WangWorldLanguages(char byte) rune {
 	case char >= 0x10 && char <= 0x1F:
 		return lowerChars[char-0x10]
 	case char >= 0x5C && char <= 0x60:
-		return midChars[char-0x10]
+		return midChars[char-0x5C]
 	case char >= 0x7B && char <= 0x7F:
 		return upperChars[char-0x7B]
 	default:
