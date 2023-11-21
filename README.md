@@ -15,5 +15,10 @@ Run `go install github.com/richardlehane/wang/cmd/wang@latest`
     wang meta DISK.IMG    // Provides a directory listing and metadata for DISK.IMG
     wang csv DISK.IMG     // Directory listing and metadata in CSV format
     wang files DISK.IMG   // Extracts files into the working directory
-    wang rtf DISK.IMG     // Files are converted to RTF and extracted to working directory [to do]
-    wang dump DISK.IMG    // Dumps sectors with tagged content into the working directory 
+    wang text DISK.IMG     // Files are converted to text and extracted to working directory
+    wang dump DISK.IMG    // Dumps sectors with tagged content into the working directory
+
+## To Do
+
+- RTF output
+- conversion commands for files as well as images (e.g. wang text file.wang)

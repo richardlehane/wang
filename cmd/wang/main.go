@@ -10,7 +10,7 @@ import (
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Print("Please supply a command (meta, dump or files) and target\n")
+		fmt.Print("Please supply a command (meta, csv, files, text or dump) and target\n")
 		os.Exit(1)
 	}
 	f, err := os.Open(os.Args[2])
@@ -46,10 +46,12 @@ func main() {
 				}
 			}
 		}
-	case "dump":
-		err = rdr.DumpSectors("")
 	case "files":
 		err = rdr.DumpFiles("")
+	case "text":
+		err = rdr.DumpText("")
+	case "dump":
+		err = rdr.DumpSectors("")
 	default:
 		fmt.Print("Invalid command must be meta, dump or files\n")
 		os.Exit(1)
