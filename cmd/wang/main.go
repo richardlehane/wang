@@ -45,6 +45,7 @@ func main() {
 					break
 				}
 			}
+			c.Flush()
 		}
 	case "files":
 		err = rdr.DumpFiles("")
