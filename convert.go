@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strconv"
 	"unicode/utf8"
 )
 
@@ -285,9 +286,26 @@ func (d *Decoder) Token() (Token, error) {
 	}
 }
 
-// Tage a page or format token and return indents and line length
+// Tage a page or format token and return line spacing, indents and line length
 func FormatToken(t Token) (int, []int, int) {
-	return 0, nil, 0
+	if t.Typ != TokenFormat || len(t.Val) < 2 {
+		return 0, nil, 0
+	}
+	var spacing, length int
+	if spc, err := strconv.Atoi(t.Val[:1]); err == nil {
+		spacing = spc
+	}
+	tabs := make([]int, 0, 10)
+	for _, c := range t.Val[1:] {
+		switch c {
+		case 0x20:
+			length += 1
+		case 0x02:
+			tabs = append(tabs, length)
+			length += 1
+		}
+	}
+	return spacing, tabs, length
 }
 
 // WangWorldLanguages converts a character in the Wang World Lanaguages Character Set
@@ -328,6 +346,8 @@ var upperChars = [5]rune{ // 0x7B to 0x7F
 	'á', 'é', 'í', 'ó', 'ú',
 }
 
+type EncodeFn func(*Decoder, io.Writer) error
+
 func TextEncode(dec *Decoder, w io.Writer) error {
 	buf := &bytes.Buffer{}
 	for {
@@ -338,6 +358,33 @@ func TextEncode(dec *Decoder, w io.Writer) error {
 		}
 		switch tok.Typ {
 		case TokenText, TokenUnderText, TokenTab, TokenEnd, TokenDTab:
+			_, err = buf.WriteString(tok.Val)
+			if err != nil {
+				return err
+			}
+		}
+	}
+}
+
+func RTFEncode(dec *Decoder, w io.Writer) error {
+	var inBold bool
+	buf := &bytes.Buffer{}
+	buf.WriteString(`{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}}`)
+	for {
+		tok, err := dec.Token()
+		if err == io.EOF || tok.Typ == TokenEOF {
+			buf.WriteString("}")
+			_, err = buf.WriteTo(w)
+			return err
+		}
+		switch tok.Typ {
+		case TokenBold:
+			inBold = true
+			if inBold {
+				inBold = false
+			}
+		case TokenText, TokenUnderText:
+			buf.WriteString(`\f0\fs60 `)
 			_, err = buf.WriteString(tok.Val)
 			if err != nil {
 				return err

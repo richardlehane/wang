@@ -1,6 +1,7 @@
 package wang
 
 import (
+	"fmt"
 	"os"
 	"testing"
 )
@@ -101,4 +102,46 @@ func TestText(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestRTF(t *testing.T) {
+	_ = os.RemoveAll("examples/DAR-0015/rtf")
+	if err := os.Mkdir("examples/DAR-0015/rtf", 0777); err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.Open("examples/DAR-0015-001.img")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	rdr, err := New(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = rdr.DumpRTF("examples/DAR-0015/rtf")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDecode(t *testing.T) {
+	f, err := os.Open("examples/DAR-0015-001.img")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	rdr, err := New(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dec := NewDecoder(rdr.Files[0])
+	for tok, err := dec.Token(); err == nil; tok, err = dec.Token() {
+		if tok.Typ == TokenFormat {
+			s, t, l := FormatToken(tok)
+			fmt.Printf("Format line with spacing %d and tabs %v for len %d\n", s, t, l)
+		} else {
+			fmt.Println(tok.Typ)
+		}
+	}
+	t.Fatal()
 }

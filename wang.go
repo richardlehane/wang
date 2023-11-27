@@ -156,20 +156,27 @@ func (r *Reader) DumpFiles(path string) error {
 	return nil
 }
 
-func (r *Reader) DumpText(path string) error {
+func (r *Reader) DumpEncoded(path string, ext string, fn EncodeFn) error {
 	for _, f := range r.Files {
 		dec := NewDecoder(f)
 		buf := &bytes.Buffer{}
-		err := TextEncode(dec, buf)
+		err := fn(dec, buf)
 		if err == nil {
-			err = os.WriteFile(filepath.Join(path, f.Name+".txt"), buf.Bytes(), 0777)
+			err = os.WriteFile(filepath.Join(path, f.Name+ext), buf.Bytes(), 0777)
 		}
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
 
+func (r *Reader) DumpText(path string) error {
+	return r.DumpEncoded(path, ".txt", TextEncode)
+}
+
+func (r *Reader) DumpRTF(path string) error {
+	return r.DumpEncoded(path, ".rtf", RTFEncode)
 }
 
 // Locations in Wang disks are stored in two bytes
