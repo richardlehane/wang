@@ -378,7 +378,7 @@ func rtfTabs(tok Token) string {
 	for _, t := range tabs {
 		out += "\\tx" + strconv.Itoa(units*t)
 	}
-	return out + " \n"
+	return out + " "
 }
 
 var repl = strings.NewReplacer("\\", "\\\\", "{", "\\{", "}", "\\}")
@@ -407,18 +407,31 @@ func ansi(in string) string {
 	return string(buf)
 }
 
+func run(ul, bold, super bool) string {
+	if !ul && !bold && !super {
+		return ""
+	}
+	out := "{"
+	if ul {
+		out += "\\ul"
+	}
+	if bold {
+		out += "\\b"
+	}
+	if super {
+		out += "\\super"
+	}
+	return out + " "
+}
+
 func RTFEncode(dec *Decoder, w io.Writer) error {
-	var inBold, inUnder bool
+	var inBold, inSuper bool
 	buf := &bytes.Buffer{}
-	buf.WriteString("{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0\\fmodern Courier New;}}\n")
-	buf.WriteString("\\plain\\f0\\fs18 \n")
+	buf.WriteString("{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0\\fmodern Courier New;}}\n\\f0\\fs18 ")
 	for {
 		tok, err := dec.Token()
 		if err == io.EOF || tok.Typ == TokenEOF {
-			if inUnder {
-				buf.WriteString("}")
-			}
-			buf.WriteString("}")
+			buf.WriteString("\n}")
 			_, err = buf.WriteTo(w)
 			return err
 		}
@@ -428,31 +441,27 @@ func RTFEncode(dec *Decoder, w io.Writer) error {
 		case TokenBold:
 			if inBold {
 				inBold = false
-				buf.WriteString("}")
 			} else {
 				inBold = true
-				buf.WriteString("{\\b ")
 			}
 		case TokenSuper:
-			buf.WriteString("{\\super ")
+			inSuper = true
 		case TokenSub:
-			buf.WriteString("}")
+			inSuper = false
 		case TokenTab, TokenDTab:
 			buf.WriteString("\\tab ")
 		case TokenEnd:
-			buf.WriteString("\\line ")
+			buf.WriteString("\n\\line ")
 		case TokenText:
-			if inUnder {
-				inUnder = false
+			buf.WriteString(run(false, inBold, inSuper))
+			buf.WriteString(ansi(tok.Val))
+			if inBold || inSuper {
 				buf.WriteString("}")
 			}
-			buf.WriteString(ansi(tok.Val))
 		case TokenUnderText:
-			if !inUnder {
-				inUnder = true
-				buf.WriteString("{\\ul ")
-			}
+			buf.WriteString(run(true, inBold, inSuper))
 			buf.WriteString(ansi(tok.Val))
+			buf.WriteString("}")
 		}
 	}
 }
