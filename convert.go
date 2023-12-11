@@ -2,10 +2,14 @@ package wang
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 	"unicode/utf8"
+
+	"golang.org/x/text/encoding/charmap"
 )
 
 type Token struct {
@@ -366,10 +370,36 @@ func TextEncode(dec *Decoder, w io.Writer) error {
 	}
 }
 
+var repl = strings.NewReplacer("\\", "\\\\", "{", "\\{", "}", "\\}")
+
+func ansi(in string) string {
+	out, _ := charmap.Windows1252.NewEncoder().String(in)
+	out = repl.Replace(out)
+	var hasSpecial bool
+	for _, c := range []byte(out) {
+		if c > 126 {
+			hasSpecial = true
+		}
+	}
+	if !hasSpecial {
+		return out
+	}
+	buf := make([]byte, 0, len(out))
+	for _, c := range []byte(out) {
+		if c > 126 {
+			hx := "\\'" + hex.EncodeToString([]byte{c})
+			buf = append(buf, []byte(hx)...)
+		} else {
+			buf = append(buf, c)
+		}
+	}
+	return string(buf)
+}
+
 func RTFEncode(dec *Decoder, w io.Writer) error {
 	var inBold bool
 	buf := &bytes.Buffer{}
-	buf.WriteString(`{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}}`)
+	buf.WriteString(`{\rtf1\ansi\deff0 {\fonttbl {\f0\fmodern Courier New;}}`)
 	for {
 		tok, err := dec.Token()
 		if err == io.EOF || tok.Typ == TokenEOF {
@@ -384,8 +414,8 @@ func RTFEncode(dec *Decoder, w io.Writer) error {
 				inBold = false
 			}
 		case TokenText, TokenUnderText:
-			buf.WriteString(`\f0\fs60 `)
-			_, err = buf.WriteString(tok.Val)
+			buf.WriteString(`\f0\fs24 `)
+			_, err = buf.WriteString(ansi(tok.Val))
 			if err != nil {
 				return err
 			}
