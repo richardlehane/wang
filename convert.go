@@ -374,7 +374,7 @@ func TextEncode(dec *Decoder, w io.Writer) error {
 func rtfTabs(tok Token) string {
 	_, tabs, ll := FormatToken(tok)
 	units := int(math.Round((1651 * 56.6928) / float64(ll)))
-	out := "\n"
+	out := "\n\\plain\\f0\\fs18 \n"
 	for _, t := range tabs {
 		out += "\\tx" + strconv.Itoa(units*t)
 	}
@@ -411,7 +411,7 @@ func RTFEncode(dec *Decoder, w io.Writer) error {
 	var inBold, inUnder bool
 	buf := &bytes.Buffer{}
 	buf.WriteString("{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0\\fmodern Courier New;}}\n")
-	buf.WriteString("\\f0\\fs18 \n")
+	buf.WriteString("\\plain\\f0\\fs18 \n")
 	for {
 		tok, err := dec.Token()
 		if err == io.EOF || tok.Typ == TokenEOF {
