@@ -409,9 +409,12 @@ func RTFEncode(dec *Decoder, w io.Writer) error {
 		}
 		switch tok.Typ {
 		case TokenBold:
-			inBold = true
 			if inBold {
 				inBold = false
+				buf.WriteString("}")
+			} else {
+				inBold = true
+				buf.WriteString("{\b ")
 			}
 		case TokenText, TokenUnderText:
 			buf.WriteString(`\f0\fs24 `)
