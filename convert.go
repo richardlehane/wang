@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"math"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -370,6 +371,16 @@ func TextEncode(dec *Decoder, w io.Writer) error {
 	}
 }
 
+func rtfTabs(tok Token) string {
+	_, tabs, ll := FormatToken(tok)
+	units := int(math.Round((1651 * 56.6928) / float64(ll)))
+	out := "\n"
+	for _, t := range tabs {
+		out += "\\tx" + strconv.Itoa(units*t)
+	}
+	return out + " \n"
+}
+
 var repl = strings.NewReplacer("\\", "\\\\", "{", "\\{", "}", "\\}")
 
 func ansi(in string) string {
@@ -399,7 +410,7 @@ func ansi(in string) string {
 func RTFEncode(dec *Decoder, w io.Writer) error {
 	var inBold, inUnder bool
 	buf := &bytes.Buffer{}
-	buf.WriteString(`{\rtf1\ansi\deff0 {\fonttbl {\f0\fmodern Courier New;}}`)
+	buf.WriteString("{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0\\fmodern Courier New;}}\n")
 	buf.WriteString("\\f0\\fs18 \n")
 	for {
 		tok, err := dec.Token()
@@ -413,8 +424,7 @@ func RTFEncode(dec *Decoder, w io.Writer) error {
 		}
 		switch tok.Typ {
 		case TokenFormat:
-			_, _, ll := FormatToken(tok)
-			buf.WriteString("**Format string, line length: **" + strconv.Itoa(ll))
+			buf.WriteString(rtfTabs(tok))
 		case TokenBold:
 			if inBold {
 				inBold = false
@@ -427,6 +437,8 @@ func RTFEncode(dec *Decoder, w io.Writer) error {
 			buf.WriteString("{\\super ")
 		case TokenSub:
 			buf.WriteString("}")
+		case TokenTab, TokenDTab:
+			buf.WriteString("\\tab ")
 		case TokenEnd:
 			buf.WriteString("\\line ")
 		case TokenText:
