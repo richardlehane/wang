@@ -306,7 +306,7 @@ func FormatToken(t Token) (int, []int, int) {
 			length += 1
 		case 0x02:
 			tabs = append(tabs, length)
-			length += 1
+			//length += 1
 		}
 	}
 	return spacing, tabs, length
@@ -397,12 +397,16 @@ func ansi(in string) string {
 }
 
 func RTFEncode(dec *Decoder, w io.Writer) error {
-	var inBold bool
+	var inBold, inUnder bool
 	buf := &bytes.Buffer{}
 	buf.WriteString(`{\rtf1\ansi\deff0 {\fonttbl {\f0\fmodern Courier New;}}`)
+	buf.WriteString("\\f0\\fs18 \n")
 	for {
 		tok, err := dec.Token()
 		if err == io.EOF || tok.Typ == TokenEOF {
+			if inUnder {
+				buf.WriteString("}")
+			}
 			buf.WriteString("}")
 			_, err = buf.WriteTo(w)
 			return err
@@ -419,14 +423,24 @@ func RTFEncode(dec *Decoder, w io.Writer) error {
 				inBold = true
 				buf.WriteString("{\\b ")
 			}
+		case TokenSuper:
+			buf.WriteString("{\\super ")
+		case TokenSub:
+			buf.WriteString("}")
 		case TokenEnd:
 			buf.WriteString("\\line ")
-		case TokenText, TokenUnderText:
-			buf.WriteString(`\f0\fs18 `)
-			_, err = buf.WriteString(ansi(tok.Val))
-			if err != nil {
-				return err
+		case TokenText:
+			if inUnder {
+				inUnder = false
+				buf.WriteString("}")
 			}
+			buf.WriteString(ansi(tok.Val))
+		case TokenUnderText:
+			if !inUnder {
+				inUnder = true
+				buf.WriteString("{\\ul ")
+			}
+			buf.WriteString(ansi(tok.Val))
 		}
 	}
 }
