@@ -414,7 +414,7 @@ func RTFEncode(dec *Decoder, w io.Writer) error {
 				buf.WriteString("}")
 			} else {
 				inBold = true
-				buf.WriteString("{\b ")
+				buf.WriteString("{\\b ")
 			}
 		case TokenText, TokenUnderText:
 			buf.WriteString(`\f0\fs24 `)
