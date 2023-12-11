@@ -373,7 +373,7 @@ func TextEncode(dec *Decoder, w io.Writer) error {
 
 func rtfTabs(tok Token) string {
 	_, tabs, ll := FormatToken(tok)
-	units := int(math.Round((1651 * 56.6928) / float64(ll)))
+	units := int(math.Round((1651 * 5.66928) / float64(ll)))
 	out := "\n\\plain\\f0\\fs18 \n"
 	for _, t := range tabs {
 		out += "\\tx" + strconv.Itoa(units*t)
