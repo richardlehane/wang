@@ -416,6 +416,8 @@ func RTFEncode(dec *Decoder, w io.Writer) error {
 				inBold = true
 				buf.WriteString("{\\b ")
 			}
+		case TokenEnd:
+			buf.WriteString("\\line ")
 		case TokenText, TokenUnderText:
 			buf.WriteString(`\f0\fs24 `)
 			_, err = buf.WriteString(ansi(tok.Val))
