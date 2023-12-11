@@ -408,6 +408,9 @@ func RTFEncode(dec *Decoder, w io.Writer) error {
 			return err
 		}
 		switch tok.Typ {
+		case TokenFormat:
+			_, _, ll := FormatToken(tok)
+			buf.WriteString("**Format string, line length: **" + strconv.Itoa(ll))
 		case TokenBold:
 			if inBold {
 				inBold = false
@@ -419,7 +422,7 @@ func RTFEncode(dec *Decoder, w io.Writer) error {
 		case TokenEnd:
 			buf.WriteString("\\line ")
 		case TokenText, TokenUnderText:
-			buf.WriteString(`\f0\fs24 `)
+			buf.WriteString(`\f0\fs18 `)
 			_, err = buf.WriteString(ansi(tok.Val))
 			if err != nil {
 				return err
