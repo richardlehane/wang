@@ -476,9 +476,6 @@ func writeInfo(buf *bufio.Writer, f *File) {
 	if len(f.Operator) > 0 {
 		buf.WriteString("{\\operator " + f.Operator + "} ")
 	}
-	if !f.DocID.zero() {
-		buf.WriteString("{\\id " + f.DocID.String() + "} ")
-	}
 	if f.Created.Year() != 1 {
 		buf.WriteString("{\\creatim" + f.Created.Format(infoFmt) + "} ")
 	}
