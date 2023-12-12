@@ -468,13 +468,13 @@ const infoFmt = "\\yr2006\\mo02\\dy01\\hr15\\min04"
 func writeInfo(buf *bufio.Writer, f *File) {
 	buf.WriteString("\n{\\info ")
 	if len(f.Name) > 0 {
-		buf.WriteString("{\\title " + f.Name + "}")
+		buf.WriteString("{\\title " + repl.Replace(f.Name) + "}")
 	}
 	if len(f.Author) > 0 {
-		buf.WriteString("{\\author " + f.Author + "}")
+		buf.WriteString("{\\author " + repl.Replace(f.Author) + "}")
 	}
 	if len(f.Operator) > 0 {
-		buf.WriteString("{\\operator " + f.Operator + "}")
+		buf.WriteString("{\\operator " + repl.Replace(f.Operator) + "}")
 	}
 	if f.Created.Year() != 1 {
 		buf.WriteString("{\\creatim" + f.Created.Format(infoFmt) + "}")
@@ -486,7 +486,7 @@ func writeInfo(buf *bufio.Writer, f *File) {
 		buf.WriteString("{\\revtim" + f.Modified.Format(infoFmt) + "}")
 	}
 	if len(f.Comment) > 0 {
-		buf.WriteString("{\\doccomm " + f.Comment + "}")
+		buf.WriteString("{\\doccomm " + repl.Replace(f.Comment) + "}")
 	}
 	buf.WriteString("{\\keywords " + f.DocID.String() + " " + f.ArchiveID + "}")
 	buf.WriteString("}")
@@ -500,6 +500,7 @@ func RTFEncode(dec *Decoder, w io.Writer) error {
 	para := &bytes.Buffer{}
 	buf.WriteString("{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0\\fmodern Courier New;}}")
 	writeInfo(buf, dec.f)
+	buf.WriteString("\\paperw15840 \\paperh12240\n\\margl1440 \\margr1440 \\margt1800 \\margb1800")
 	buf.WriteString("\n\\f0\\fs18")
 	// drop the page token
 	tok, err := dec.Token()
