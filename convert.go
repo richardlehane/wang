@@ -1,8 +1,10 @@
 package wang
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -374,7 +376,7 @@ func TextEncode(dec *Decoder, w io.Writer) error {
 func rtfTabs(tok Token) string {
 	_, tabs, ll := FormatToken(tok)
 	units := int(math.Round((1651 * 5.66928) / float64(ll)))
-	out := "\n\\par\\pard"
+	var out string
 	for _, t := range tabs {
 		out += "\\tx" + strconv.Itoa(units*t)
 	}
@@ -424,20 +426,89 @@ func run(ul, bold, super bool) string {
 	return out + " "
 }
 
-func RTFEncode(dec *Decoder, w io.Writer) error {
-	var inBold, inSuper bool
-	buf := &bytes.Buffer{}
-	buf.WriteString("{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0\\fmodern Courier New;}}\n\\f0\\fs18 ")
-	for {
-		tok, err := dec.Token()
-		if err == io.EOF || tok.Typ == TokenEOF {
-			buf.WriteString("\n}")
-			_, err = buf.WriteTo(w)
+func writePara(buf *bufio.Writer, para *bytes.Buffer, tabs string, lines int, centre, pgbreak bool) error {
+	_, err := buf.WriteString("\n{\\pard ")
+	if err != nil {
+		return err
+	}
+	_, err = buf.WriteString(tabs)
+	if err != nil {
+		return err
+	}
+	if pgbreak {
+		_, err = buf.WriteString("\\page ")
+		if err != nil {
 			return err
 		}
+	}
+	for i := 0; i < lines; i++ {
+		_, err = buf.WriteString("\\line ")
+		if err != nil {
+			return err
+		}
+	}
+	if centre {
+		_, err = buf.WriteString("\\qc ")
+		if err != nil {
+			return err
+		}
+	}
+	if para.Len() > 0 {
+		_, err = io.Copy(buf, para)
+		if err != nil {
+			return err
+		}
+	}
+	_, err = buf.WriteString("\\par}")
+	return err
+}
+
+func RTFEncode(dec *Decoder, w io.Writer) error {
+	var inBold, inSuper, centre, pgbreak bool
+	var tabs string
+	var lines int
+	buf := bufio.NewWriter(w)
+	para := &bytes.Buffer{}
+	buf.WriteString("{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0\\fmodern Courier New;}}\n\\f0\\fs18 ")
+	// drop the page token
+	tok, err := dec.Token()
+	if err != nil {
+		return err
+	}
+	if tok.Typ != TokenPage {
+		return errors.New("bad token: expect first token to be a page")
+	}
+	for {
+		tok, err = dec.Token()
+		if err == io.EOF || tok.Typ == TokenEOF {
+			if para.Len() > 0 || lines > 0 {
+				err = writePara(buf, para, tabs, lines, centre, pgbreak)
+				if err != nil {
+					return err
+				}
+			}
+			buf.WriteString("\n}")
+			return buf.Flush()
+		}
 		switch tok.Typ {
+		case TokenEnd:
+			if para.Len() > 0 || pgbreak {
+				err = writePara(buf, para, tabs, lines, centre, pgbreak)
+				if err != nil {
+					return err
+				}
+				lines = 0
+				pgbreak = false
+				centre = false
+			} else {
+				lines += 1
+			}
+		case TokenPage:
+			pgbreak = true
+		case TokenCentre:
+			centre = true
 		case TokenFormat:
-			buf.WriteString(rtfTabs(tok))
+			tabs = rtfTabs(tok)
 		case TokenBold:
 			if inBold {
 				inBold = false
@@ -449,19 +520,17 @@ func RTFEncode(dec *Decoder, w io.Writer) error {
 		case TokenSub:
 			inSuper = false
 		case TokenTab, TokenDTab:
-			buf.WriteString("\\tab ")
-		case TokenEnd:
-			buf.WriteString("\n\\line ")
+			para.WriteString("\\tab ")
 		case TokenText:
-			buf.WriteString(run(false, inBold, inSuper))
-			buf.WriteString(ansi(tok.Val))
+			para.WriteString(run(false, inBold, inSuper))
+			para.WriteString(ansi(tok.Val))
 			if inBold || inSuper {
-				buf.WriteString("}")
+				para.WriteString("}")
 			}
 		case TokenUnderText:
-			buf.WriteString(run(true, inBold, inSuper))
-			buf.WriteString(ansi(tok.Val))
-			buf.WriteString("}")
+			para.WriteString(run(true, inBold, inSuper))
+			para.WriteString(ansi(tok.Val))
+			para.WriteString("}")
 		}
 	}
 }
