@@ -499,7 +499,7 @@ func RTFEncode(dec *Decoder, w io.Writer) error {
 	para := &bytes.Buffer{}
 	buf.WriteString("{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0\\fmodern Courier New;}}")
 	writeInfo(buf, dec.f)
-	buf.WriteString("\n\\paperw12240 \\paperh15840\n\\margl1080 \\margr1080 \\margt1800 \\margb1800")
+	buf.WriteString("\n\\paperw12240 \\paperh15840\n\\margl1080 \\margr1080 \\margt1560 \\margb1560")
 	buf.WriteString("\n\\f0\\fs18")
 	// drop the page token
 	tok, err := dec.Token()
