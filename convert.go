@@ -466,9 +466,6 @@ func writePara(buf *bufio.Writer, para *bytes.Buffer, tabs string, lines int, ce
 const infoFmt = "\\yr2006\\mo02\\dy01\\hr15\\min04"
 
 func writeInfo(buf *bufio.Writer, f *File) {
-	if len(f.Name)+len(f.Comment)+len(f.Author) == 0 && f.Modified.Year() == 1 {
-		return
-	}
 	buf.WriteString("\n{\\info ")
 	if len(f.Name) > 0 {
 		buf.WriteString("{\\title " + f.Name + "} ")
@@ -486,11 +483,18 @@ func writeInfo(buf *bufio.Writer, f *File) {
 		buf.WriteString("{\\creatim" + f.Created.Format(infoFmt) + "} ")
 	}
 	if f.Modified.Year() != 1 {
+		if f.Created.Year() == 1 {
+			buf.WriteString("{\\creatim" + f.Modified.Format(infoFmt) + "} ")
+		}
 		buf.WriteString("{\\revtim" + f.Modified.Format(infoFmt) + "} ")
 	}
+	buf.WriteString("{\\doccomm ")
 	if len(f.Comment) > 0 {
-		buf.WriteString("{\\doccomm " + f.Comment + "} ")
+		buf.WriteString(f.Comment + " ")
 	}
+	buf.WriteString("DocumentID: " + f.DocID.String() + " ")
+	buf.WriteString("ArchiveID: " + f.ArchiveID)
+	buf.WriteString("}")
 	buf.WriteString("}")
 }
 
