@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -375,7 +374,7 @@ func TextEncode(dec *Decoder, w io.Writer) error {
 
 func rtfTabs(tok Token) string {
 	_, tabs, ll := FormatToken(tok)
-	units := int(math.Round((1651 * 5.66928) / float64(ll)))
+	units := 10080 / ll // page width - left/right margins (12240-1080-1080)
 	var out string
 	for _, t := range tabs {
 		out += "\\tx" + strconv.Itoa(units*t)
