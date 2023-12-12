@@ -309,7 +309,7 @@ func FormatToken(t Token) (int, []int, int) {
 			length += 1
 		case 0x02:
 			tabs = append(tabs, length)
-			//length += 1
+			length += 1
 		}
 	}
 	return spacing, tabs, length
