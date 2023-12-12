@@ -84,18 +84,18 @@ func (t TokenType) String() string {
 const bufSz int = 4096
 
 type Decoder struct {
+	f           *File
 	fIdx        int64 // index in the underlying reader
 	readBuffer  [bufSz]byte
 	rbuf        []byte
 	writeBuffer [bufSz]byte
 	wLen        int // length written to writeBuffer
-	r           io.Reader
 	eof         bool
 	curr        state
 }
 
-func NewDecoder(r io.Reader) *Decoder {
-	return &Decoder{fIdx: -1, r: r}
+func NewDecoder(f *File) *Decoder {
+	return &Decoder{f: f, fIdx: -1}
 }
 
 // reports if a character is underlined and, if so, decodes the character
@@ -275,7 +275,7 @@ func (d *Decoder) Token() (Token, error) {
 			d.rbuf = d.rbuf[idx+1:]
 			return special(c, d.fIdx), nil
 		}
-		n, err := d.r.Read(d.readBuffer[:])
+		n, err := d.f.Read(d.readBuffer[:])
 		if n < 1 {
 			d.eof = true
 			switch d.curr {
@@ -463,13 +463,46 @@ func writePara(buf *bufio.Writer, para *bytes.Buffer, tabs string, lines int, ce
 	return err
 }
 
+const infoFmt = "\\yr2006\\mo02\\dy01\\hr15\\min04"
+
+func writeInfo(buf *bufio.Writer, f *File) {
+	if len(f.Name)+len(f.Comment)+len(f.Author) == 0 && f.Modified.Year() == 1 {
+		return
+	}
+	buf.WriteString("\n{\\info ")
+	if len(f.Name) > 0 {
+		buf.WriteString("{\\title " + f.Name + "} ")
+	}
+	if len(f.Author) > 0 {
+		buf.WriteString("{\\author " + f.Author + "} ")
+	}
+	if len(f.Operator) > 0 {
+		buf.WriteString("{\\operator " + f.Operator + "} ")
+	}
+	if !f.DocID.zero() {
+		buf.WriteString("{\\id " + f.DocID.String() + "} ")
+	}
+	if f.Created.Year() != 1 {
+		buf.WriteString("{\\creatim" + f.Created.Format(infoFmt) + "} ")
+	}
+	if f.Modified.Year() != 1 {
+		buf.WriteString("{\\revtim" + f.Modified.Format(infoFmt) + "} ")
+	}
+	if len(f.Comment) > 0 {
+		buf.WriteString("{\\doccomm " + f.Comment + "} ")
+	}
+	buf.WriteString("}")
+}
+
 func RTFEncode(dec *Decoder, w io.Writer) error {
 	var inBold, inSuper, centre, pgbreak bool
 	var tabs string
 	var lines int
 	buf := bufio.NewWriter(w)
 	para := &bytes.Buffer{}
-	buf.WriteString("{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0\\fmodern Courier New;}}\n\\f0\\fs18 ")
+	buf.WriteString("{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0\\fmodern Courier New;}}")
+	writeInfo(buf, dec.f)
+	buf.WriteString("\n\\f0\\fs18 ")
 	// drop the page token
 	tok, err := dec.Token()
 	if err != nil {
