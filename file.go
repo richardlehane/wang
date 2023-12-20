@@ -38,6 +38,12 @@ func (f *File) String() string {
 		f.DocID.String(), f.ArchiveID, f.Name, f.Author, f.Operator, f.Comment, f.Created, f.Modified)
 }
 
+var sanitizer = strings.NewReplacer(`/`, "_", `\`, "_", `?`, "_", `%`, "_", `*`, "_", `:`, "_", `|`, "_", `"`, "_", `<`, "_", `>`, "_")
+
+func (f *File) SanitizedName() string {
+	return sanitizer.Replace(f.Name)
+}
+
 func (f *File) CSV() []string {
 	return []string{f.DocID.String(), f.ArchiveID, f.Name, f.Author, f.Operator, f.Comment, f.Created.String(), f.Modified.String()}
 }
@@ -47,11 +53,11 @@ func file(buf []byte) (*File, loc, error) {
 		return nil, loc{}, fmt.Errorf("sector not big enough for file metadata: %d", len(buf))
 	}
 	f := &File{
-		Name:      trim(buf[13:38]),
-		ArchiveID: trim(buf[192:196]),
-		Author:    trim(buf[60:80]),
-		Operator:  trim(buf[39:59]),
-		Comment:   trim(buf[81:101]),
+		Name:      WWLString(trim(buf[13:38])),
+		ArchiveID: trim(buf[192:197]),
+		Author:    WWLString(trim(buf[60:80])),
+		Operator:  WWLString(trim(buf[39:59])),
+		Comment:   WWLString(trim(buf[81:101])),
 		Created:   date(buf[132:146]),
 		Modified:  date(buf[177:191]),
 	}

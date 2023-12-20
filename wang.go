@@ -2,6 +2,7 @@ package wang
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -70,6 +71,75 @@ func New(ra io.ReaderAt) (*Reader, error) {
 	return rdr, nil
 }
 
+func Fix(ra io.ReaderAt) (*Reader, error) {
+	rdr := &Reader{ra: ra}
+	err := rdr.loadChunk(0)
+	if err != nil {
+		return nil, err
+	}
+	if rdr.csz < secsz*8 {
+		return nil, errors.New("file too small to be a wang, need at least 2048 bytes")
+	}
+	copy(rdr.archiveID[:], rdr.chunk[:3])
+	// check archiveID
+	if !rdr.archiveID.zero() {
+		return nil, errors.New("can't fix this wang, archiveID is not zero")
+	}
+	temp_contents := make([]dir, 0, 10)
+	temp_files := make([]*File, 0, 10)
+	var off loc
+	for {
+		buf, err := rdr.sector(off)
+		if err != nil {
+			break
+		}
+		off = off.inc()
+		if buf[3] != 65 {
+			continue
+		}
+		f, pgl, err := file(buf[:])
+		if err != nil {
+			continue
+		}
+		buf2, err := rdr.sector(pgl)
+		if err != nil {
+			continue
+		}
+		f.pages = pages(buf2)
+		f.pgMap = make(map[loc]struct{})
+		f.pgMap[loc{}] = struct{}{} // include the empty location (for last page in a file)
+		for _, l := range f.pages {
+			f.pgMap[l] = struct{}{}
+		}
+		f.r = rdr
+		temp_files = append(temp_files, f)
+		temp_contents = append(temp_contents, dir{f.DocID, off.dec()})
+	}
+	rdr.contents = make([]dir, 0, len(temp_contents))
+	rdr.Files = make([]*File, 0, len(temp_files))
+	var arkID tag
+	for i, f := range temp_files {
+		at, err := fromString(f.ArchiveID)
+		if err != nil || at.zero() {
+			continue
+		}
+		if arkID.zero() {
+			arkID = at
+		} else {
+			if arkID != at {
+				continue
+			}
+		}
+		rdr.Files = append(rdr.Files, f)
+		rdr.contents = append(rdr.contents, temp_contents[i])
+	}
+	if len(rdr.Files) == 0 {
+		return nil, errors.New("does not appear to be a wang, no files found")
+	}
+	rdr.archiveID = arkID
+	return rdr, nil
+}
+
 // Reader provides sequential access to a Wang disk image
 type Reader struct {
 	archiveID tag
@@ -104,6 +174,36 @@ func (r *Reader) sector(l loc) ([]byte, error) {
 		return nil, fmt.Errorf("can't seek that far: %v", l)
 	}
 	return r.chunk[l.secoff() : l.secoff()+secsz], nil
+}
+
+func (r *Reader) WriteFile(path string) error {
+	var buf = &bytes.Buffer{}
+	var off loc
+	for {
+		byts, err := r.sector(off)
+		if err != nil {
+			break
+		}
+		if off.zero() {
+			copy(byts[:3], r.archiveID[:])
+			copy(byts[3:8], []byte(r.archiveID.String()))
+		}
+		if off.foff() == diroff {
+			var idx int
+			byts = make([]byte, secsz)
+			for _, c := range r.contents {
+				copy(byts[idx:], c.t[:])
+				copy(byts[idx+3:], c.l[:])
+				idx += 6
+			}
+		}
+		_, err = buf.Write(byts)
+		if err != nil {
+			return err
+		}
+		off = off.inc()
+	}
+	return os.WriteFile(path, buf.Bytes(), 0777)
 }
 
 // DumpSectors checks all 256 byte sectors in the file for tags
@@ -147,7 +247,7 @@ func (r *Reader) DumpFiles(path string) error {
 	for _, f := range r.Files {
 		buf, err := io.ReadAll(f)
 		if err == nil {
-			err = os.WriteFile(filepath.Join(path, f.Name), buf, 0777)
+			err = os.WriteFile(filepath.Join(path, f.SanitizedName()), buf, 0777)
 		}
 		if err != nil {
 			return err
@@ -162,7 +262,7 @@ func (r *Reader) DumpEncoded(path string, ext string, fn EncodeFn) error {
 		buf := &bytes.Buffer{}
 		err := fn(dec, buf)
 		if err == nil {
-			err = os.WriteFile(filepath.Join(path, f.Name+ext), buf.Bytes(), 0777)
+			err = os.WriteFile(filepath.Join(path, f.SanitizedName()+ext), buf.Bytes(), 0777)
 		}
 		if err != nil {
 			return err
@@ -208,6 +308,19 @@ func (l loc) inc() loc {
 	return l
 }
 
+func (l loc) dec() loc {
+	if l[0] == 0 && l[1] == 0 {
+		return l
+	}
+	if l[1] > 0 {
+		l[1] = l[1] - 1
+	} else {
+		l[1] = 15
+		l[0] = l[0] - 1
+	}
+	return l
+}
+
 func (l loc) chunkoff() int64 {
 	return int64(l[0]) * chunksz
 }
@@ -234,6 +347,20 @@ func (t tag) zero() bool {
 		return true
 	}
 	return false
+}
+
+func fromString(s string) (tag, error) {
+	if len(s) != 5 {
+		return tag{}, errors.New("invalid tag")
+	}
+	var t tag
+	buf, err := hex.DecodeString(s[:4])
+	if err != nil {
+		return tag{}, errors.New("bad tag " + err.Error())
+	}
+	copy(t[:2], buf)
+	t[2] = s[4]
+	return t, nil
 }
 
 // directory entries start at 768 bytes

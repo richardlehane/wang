@@ -333,6 +333,15 @@ func WangWorldLanguages(char byte) rune {
 	}
 }
 
+// WWLString converts a string from the WWL character set to UTF-8
+func WWLString(s string) string {
+	out := make([]rune, len(s))
+	for i, c := range []byte(s) {
+		out[i] = WangWorldLanguages(c)
+	}
+	return string(out)
+}
+
 var specialChars = [4]rune{ //0x07 to 0x0A
 	'|', '°', 0xA0, '£',
 }

@@ -3,8 +3,13 @@ package wang
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 )
+
+var testDir = "examples"
+
+var testFile = "DAR-0015-001"
 
 func TestLoc(t *testing.T) {
 	l := loc{2, 4}
@@ -44,12 +49,32 @@ func TestDate(t *testing.T) {
 	}
 }
 
-func TestFile(t *testing.T) {
-	_ = os.RemoveAll("examples/DAR-0015/files")
-	if err := os.MkdirAll("examples/DAR-0015/files", 0777); err != nil {
+func TestFix(t *testing.T) {
+	_ = os.RemoveAll(filepath.Join(testDir, testFile))
+	if err := os.MkdirAll(filepath.Join(testDir, testFile), 0777); err != nil {
 		t.Fatal(err)
 	}
-	f, err := os.Open("examples/DAR-0015-001.img")
+	f, err := os.Open(filepath.Join(testDir, testFile+".img"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	rdr, err := Fix(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = rdr.WriteFile(filepath.Join(testDir, testFile, testFile+"_fix.img"))
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestFile(t *testing.T) {
+	_ = os.RemoveAll(filepath.Join(testDir, testFile, "files"))
+	if err := os.MkdirAll(filepath.Join(testDir, testFile, "files"), 0777); err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.Open(filepath.Join(testDir, testFile+".img"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,18 +83,18 @@ func TestFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = rdr.DumpFiles("examples/DAR-0015/files")
+	err = rdr.DumpFiles(filepath.Join(testDir, testFile, "files"))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestSectors(t *testing.T) {
-	_ = os.RemoveAll("examples/DAR-0015/sectors")
-	if err := os.Mkdir("examples/DAR-0015/sectors", 0777); err != nil {
+	_ = os.RemoveAll(filepath.Join(testDir, testFile, "sectors"))
+	if err := os.MkdirAll(filepath.Join(testDir, testFile, "sectors"), 0777); err != nil {
 		t.Fatal(err)
 	}
-	f, err := os.Open("examples/DAR-0015-001.img")
+	f, err := os.Open(filepath.Join(testDir, testFile+".img"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,18 +103,18 @@ func TestSectors(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = rdr.DumpSectors("examples/DAR-0015/sectors")
+	err = rdr.DumpSectors(filepath.Join(testDir, testFile, "sectors"))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestText(t *testing.T) {
-	_ = os.RemoveAll("examples/DAR-0015/text")
-	if err := os.Mkdir("examples/DAR-0015/text", 0777); err != nil {
+	_ = os.RemoveAll(filepath.Join(testDir, testFile, "text"))
+	if err := os.MkdirAll(filepath.Join(testDir, testFile, "text"), 0777); err != nil {
 		t.Fatal(err)
 	}
-	f, err := os.Open("examples/DAR-0015-001.img")
+	f, err := os.Open(filepath.Join(testDir, testFile+".img"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,18 +123,18 @@ func TestText(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = rdr.DumpText("examples/DAR-0015/text")
+	err = rdr.DumpText(filepath.Join(testDir, testFile, "text"))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestRTF(t *testing.T) {
-	_ = os.RemoveAll("examples/DAR-0015/rtf")
-	if err := os.Mkdir("examples/DAR-0015/rtf", 0777); err != nil {
+	_ = os.RemoveAll(filepath.Join(testDir, testFile, "rtf"))
+	if err := os.MkdirAll(filepath.Join(testDir, testFile, "rtf"), 0777); err != nil {
 		t.Fatal(err)
 	}
-	f, err := os.Open("examples/DAR-0015-001.img")
+	f, err := os.Open(filepath.Join(testDir, testFile+".img"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,14 +143,14 @@ func TestRTF(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = rdr.DumpRTF("examples/DAR-0015/rtf")
+	err = rdr.DumpRTF(filepath.Join(testDir, testFile, "rtf"))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestDecode(t *testing.T) {
-	f, err := os.Open("examples/DAR-0015-001.img")
+	f, err := os.Open(filepath.Join(testDir, testFile+".img"))
 	if err != nil {
 		t.Fatal(err)
 	}
